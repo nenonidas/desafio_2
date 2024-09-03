@@ -1,0 +1,90 @@
+
+### Configuração do Nginx Explicada Passo a Passo
+
+#### 1. **Bloco `events`**
+
+```nginx
+events {
+    worker_connections 1024;
+}
+```
+
+- **`events { ... }`**: Este bloco configura os parâmetros relacionados ao processamento de eventos e conexões do Nginx.
+- **`worker_connections 1024;`**: Define o número máximo de conexões simultâneas que cada processo de trabalho pode abrir. O valor `1024` é o limite para cada worker process.
+
+#### 2. **Bloco `http`**
+
+```nginx
+http {
+    server {
+        listen 80;
+
+        location / {
+            proxy_set_header Host               $host;
+            proxy_set_header X-Real-IP          $remote_addr;
+            proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto  $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_cache_bypass $http_upgrade;
+
+            proxy_pass http://nodejs-api:5000/;
+        }
+    }
+}
+```
+
+##### **Bloco `http`**
+
+- **`http { ... }`**: Este bloco configura as diretrizes relacionadas ao tráfego HTTP, incluindo servidores e localizações.
+
+##### **Bloco `server`**
+
+```nginx
+server {
+    listen 80;
+
+    location / {
+        proxy_set_header Host               $host;
+        proxy_set_header X-Real-IP          $remote_addr;
+        proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto  $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_cache_bypass $http_upgrade;
+
+        proxy_pass http://nodejs-api:5000/;
+    }
+}
+```
+
+- **`server { ... }`**: Define um bloco de configuração para um servidor virtual. 
+
+  - **`listen 80;`**: Configura o Nginx para escutar requisições na porta 80, que é a porta padrão para HTTP.
+
+  - **`location / { ... }`**: Define as regras para todas as requisições que chegam ao caminho `/` (ou seja, a raiz do site).
+
+    - **`proxy_set_header Host $host;`**: Define o cabeçalho `Host` da requisição que será enviada para o servidor backend. O valor `$host` corresponde ao cabeçalho `Host` da requisição original.
+    
+    - **`proxy_set_header X-Real-IP $remote_addr;`**: Define o cabeçalho `X-Real-IP` para passar o IP real do cliente que fez a requisição.
+    
+    - **`proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`**: Define o cabeçalho `X-Forwarded-For` para incluir a cadeia de IPs intermediários da requisição. Isso ajuda o backend a identificar a origem real da requisição.
+    
+    - **`proxy_set_header X-Forwarded-Proto $scheme;`**: Define o cabeçalho `X-Forwarded-Proto` para indicar o protocolo original da requisição (`http` ou `https`).
+
+    - **`proxy_set_header Upgrade $http_upgrade;`**: Define o cabeçalho `Upgrade` para suportar upgrades de conexão, como a atualização para WebSockets.
+    
+    - **`proxy_set_header Connection 'upgrade';`**: Define o cabeçalho `Connection` para permitir upgrades de conexão. Isso é útil para suportar WebSockets.
+
+    - **`proxy_cache_bypass $http_upgrade;`**: Evita o cache de requisições quando há um upgrade de conexão, como em WebSockets.
+
+    - **`proxy_pass http://nodejs-api:5000/;`**: Encaminha todas as requisições recebidas para o servidor backend especificado. No caso, `http://nodejs-api:5000/` é o endereço do servidor backend que o Nginx irá encaminhar as requisições.
+
+### Resumo
+
+- **`events { ... }`**: Configura a capacidade de conexão do Nginx.
+- **`http { ... }`**: Configura os parâmetros gerais para tráfego HTTP.
+- **`server { ... }`**: Define um servidor virtual que escuta na porta 80.
+- **`location / { ... }`**: Configura como o Nginx deve tratar as requisições que chegam à raiz do servidor e como essas requisições devem ser encaminhadas para um backend.
+
+Se precisar de mais alguma explicação ou detalhes, sinta-se à vontade para perguntar!
